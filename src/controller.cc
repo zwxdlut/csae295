@@ -29,6 +29,13 @@ void Controller::start(const std::string &_addr, const uint32_t _port, const uin
         up_port_ = _port;
         up_stopped_ = false;
 
+        // set socket callback
+        up_sock_.set_connect_state_callback([](const socketlib::ConnectState _state, void *_param)
+        {
+            Controller *self = static_cast<Controller *>(_param);
+            self->on_up_connect_state(_state);
+        }, this);
+
         // create socket and connect it to server
         up_sock_.open(up_addr_.c_str(), up_port_);
         
@@ -43,13 +50,6 @@ void Controller::start(const std::string &_addr, const uint32_t _port, const uin
         {
             this->up_sock_send_thread();
         });
-
-        // up callback
-        up_sock_.set_connect_state_callback([](const socketlib::ConnectState _state, void *_param)
-        {
-            Controller *self = static_cast<Controller *>(_param);
-            self->on_up_connect_state(_state);
-        }, this);
     }
     else if (DOWN_CHANNEL == _ch)
     {
@@ -57,6 +57,13 @@ void Controller::start(const std::string &_addr, const uint32_t _port, const uin
         down_port_ = _port;
         down_stopped_ = false;
 
+        // set socket callback
+        down_sock_.set_connect_state_callback([](const socketlib::ConnectState _state, void *_param)
+        {
+            Controller *self = static_cast<Controller *>(_param);
+            self->on_down_connect_state(_state);
+        }, this);
+    
         // create socket and connect it to server
         down_sock_.open(down_addr_.c_str(), down_port_);
         
@@ -71,13 +78,6 @@ void Controller::start(const std::string &_addr, const uint32_t _port, const uin
         {
             this->down_sock_send_thread();
         });
-
-        // down callback
-        down_sock_.set_connect_state_callback([](const socketlib::ConnectState _state, void *_param)
-        {
-            Controller *self = static_cast<Controller *>(_param);
-            self->on_down_connect_state(_state);
-        }, this);
     }
 }
 
