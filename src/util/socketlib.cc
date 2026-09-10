@@ -125,7 +125,7 @@ ssize_t Client::recv(void *_buf, size_t _size)
 {
     ssize_t size = 0;
 
-    size = ::recv(sockfd_, _buf, _size, MSG_WAITALL);
+    size = ::recv(sockfd_, _buf, _size, 0);
 
     if (0 == size)
     {
