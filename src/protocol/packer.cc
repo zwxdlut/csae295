@@ -1,21 +1,22 @@
-#include "packer.h"
-#include "log.h"
+#include "protocol/packer.h"
 
-namespace protocol
+#include "util/log.h"
+
+namespace csae295
 {
-void Packer::unpack(const void *_buf, const size_t _size, Handler &_handler)
+std::shared_ptr<MessageHeader> Packer::unpack(const void *_buf, const size_t _size, Handler *_handler)
 {
     if (nullptr == _buf || 0 == _size)
     {
-        LOGE(TAG, "unpack: buffer is null or _size is 0!\n");
-        return;
+        LOGE(TAG, "buffer is null or _size is 0!\n");
+        return nullptr;
     }
 
     uint8_t *buf = (uint8_t*)_buf;
     if (0xF2 != buf[0])
     {   
-        LOGE(TAG, "unpack: No identifier!\n");
-        return;
+        LOGE(TAG, "No identifier!\n");
+        return nullptr;
     }
     
     // unpack message
@@ -23,45 +24,76 @@ void Packer::unpack(const void *_buf, const size_t _size, Handler &_handler)
 
     switch (data_type)
     {
-    case VEH2CLOUD_INH:
-    {
-        Veh2CloudInh msg(buf, _size);
-        _handler.on_unpack(msg);
-        break;
+        case HEARTBEAT:
+        {
+            auto msg = std::make_shared<MessageHeader>(buf, _size);
+            if (nullptr != _handler)
+            {
+                _handler->on_message(*msg);
+            }
+            return msg;
+        }
+
+        case HEARTBEAT_RES:
+        {
+            auto msg = std::make_shared<MessageHeader>(buf, _size);
+            if (nullptr != _handler)
+            {
+                _handler->on_message(*msg);
+            }
+            return msg;
+        }
+
+        case VEH2CLOUD_INH:
+        {
+            auto msg = std::make_shared<Veh2CloudInh>(buf, _size);
+            if (nullptr != _handler)
+            {
+                _handler->on_message(*msg);
+            }
+            return msg;
+        }
+
+        case CLOUD2VEH_INH_RES:
+        {
+            auto msg = std::make_shared<Cloud2VehInhRes>(buf, _size);
+            if (nullptr != _handler)
+            {
+                _handler->on_message(*msg);
+            }
+            return msg;
+        }
+
+        case VEH2CLOUD_STATE:
+        {
+            uint8_t version = *(uint8_t*)(buf + 6);
+
+            if (0x01 == version)
+            {
+                auto msg = std::make_shared<Veh2CloudState>(buf, _size);
+                if (nullptr != _handler)
+                {
+                    _handler->on_message(*msg);
+                }
+                return msg;
+            }
+            else if (0x02 == version)
+            {
+                auto msg = std::make_shared<Veh2CloudState2>(buf, _size);
+                if (nullptr != _handler)
+                {
+                    _handler->on_message(*msg);
+                }
+                return msg;
+            }
+        }
+
+        default:
+            break;
     }
 
-    case CLOUD2VEH_INH_RES:
-    {
-        Cloud2VehInhRes msg(buf, _size);
-        _handler.on_unpack(msg);
-        break;
-    }
-
-    case VEH2CLOUD_STATE:
-    {
-        Veh2CloudState msg(buf, _size);
-        _handler.on_unpack(msg);
-        break;
-    }
-
-    case HEARTBEAT:
-    {
-        MessageHeader msg(buf, _size);
-        _handler.on_unpack(msg);
-        break;
-    }
-
-    case HEARTBEAT_RES:
-    {
-        MessageHeader msg(buf, _size);
-        _handler.on_unpack(msg);
-        break;
-    }
-
-    default:
-        break;
-    }
+    return nullptr;
 }
-} // namespace protocal
+} // namespace csae295
 
 

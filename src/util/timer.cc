@@ -1,3 +1,5 @@
+#include "util/timer.h"
+
 #include <string.h>
 #include <stdio.h>
 
@@ -8,8 +10,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
-#include "timer.h"
-#include "log.h"
+#include "util/log.h"
 
 Timer::~Timer()
 {
@@ -37,7 +38,7 @@ int32_t Timer::start(const uint32_t _period, handler _handler, void *_param, con
 
     if (0 != timer_create(CLOCK_REALTIME, &evp, &timer_))  
     {  
-        LOGE(TAG, "start: timer_create error(%d), %s!\n", errno, strerror(errno));
+        LOGE(TAG, "timer_create error(%d), %s!\n", errno, strerror(errno));
         return -1;  
     }  
 
@@ -50,7 +51,7 @@ int32_t Timer::start(const uint32_t _period, handler _handler, void *_param, con
 
     if (0 != timer_settime(timer_, 0, &ts, NULL))  
     {  
-        LOGE(TAG, "start: timer_settime error(%d), %s!\n", errno, strerror(errno));
+        LOGE(TAG, "timer_settime error(%d), %s!\n", errno, strerror(errno));
         return -1;
     }
 
@@ -65,10 +66,12 @@ int32_t Timer::stop()
     {
        return 0;
     }
+
+    stopped = true;
     
     if (0 != timer_delete(timer_))
     {
-        LOGE(TAG, "stop: timer_delete error(%d), %s\n", errno, strerror(errno));
+        LOGE(TAG, "timer_delete error(%d), %s\n", errno, strerror(errno));
         return -1;
     }
 

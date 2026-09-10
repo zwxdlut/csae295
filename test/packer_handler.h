@@ -1,33 +1,32 @@
-#ifndef __PROTOCOL_PACKER_HANDLER_H__
-#define __PROTOCOL_PACKER_HANDLER_H__
+#ifndef __PACKER_HANDLER_H__
+#define __PACKER_HANDLER_H__
 
-#include "packer.h"
+#include "protocol/packer.h"
 
-namespace protocol
-{
+using namespace csae295;
+
 class PackerHandler : public Packer::Handler
 {
 public:
-    void on_unpack(const MessageHeader &_msg) override
+    void on_message(const MessageHeader &_msg) override
     {
-        std::cout << std::endl << _msg;
+        std::cout << _msg << std::endl;
     }
 
-    void on_unpack(const Veh2CloudInh &_msg) override
+    void on_message(const Veh2CloudInh &_msg) override
     {
-        std::cout << std::endl << _msg;
+        std::cout << _msg << std::endl;
     }
 
-    void on_unpack(const Cloud2VehInhRes &_msg) override
+    void on_message(const Cloud2VehInhRes &_msg) override
     {
-        std::cout << std::endl << _msg;
+        std::cout << _msg << std::endl;
     }
 
-    void on_unpack(const Veh2CloudState &_msg) override
+    void on_message(const Veh2CloudState &_msg) override
     {
-        std::cout << std::endl << _msg;
+        std::cout << _msg << std::endl;
     }
 };
-} // namespace protocal
 
-#endif // __PROTOCOL_PACKER_HANDLER_H__
+#endif // __PACKER_HANDLER_H__

@@ -5,9 +5,9 @@
     #include <config.h>
     #include <android/log.h>
 
-    #define LOGI(TAG, format, ...) __android_log_print(ANDROID_LOG_INFO, TAG, format, ##__VA_ARGS__);
-    #define LOGW(TAG, format, ...) __android_log_print(ANDROID_LOG_WARN, TAG, format, ##__VA_ARGS__);
-    #define LOGE(TAG, format, ...) __android_log_print(ANDROID_LOG_ERROR, TAG, format, ##__VA_ARGS__);
+    #define LOGI(TAG, format, ...) __android_log_print(ANDROID_LOG_INFO, TAG, __func__, format, ##__VA_ARGS__);
+    #define LOGW(TAG, format, ...) __android_log_print(ANDROID_LOG_WARN, TAG, __func__, format, ##__VA_ARGS__);
+    #define LOGE(TAG, format, ...) __android_log_print(ANDROID_LOG_ERROR, TAG, __func__, format, ##__VA_ARGS__);
     #define LOGD(TAG, format, ...) __android_log_print(ANDROID_LOG_DEBUG, TAG, format, ##__VA_ARGS__);
 #else
     #define NONE         "\033[m"
@@ -27,10 +27,10 @@
     #define LIGHT_GRAY   "\033[0;37m"
     #define WHITE        "\033[1;37m"
 
-    #define LOGI(TAG, format, ...) do {printf(LIGHT_GRAY "[%s] " format NONE, TAG, ##__VA_ARGS__);} while(0)
-    #define LOGW(TAG, format, ...) do {printf(YELLOW "[%s] " format NONE, TAG, ##__VA_ARGS__);} while(0)
-    #define LOGE(TAG, format, ...) do {printf(LIGHT_RED "[%s] " format NONE, TAG, ##__VA_ARGS__);} while(0)
-    #define LOGD(TAG, format, ...) do {printf(LIGHT_CYAN "[%s] " format NONE, TAG, ##__VA_ARGS__);} while(0)
+    #define LOGI(TAG, format, ...) do {printf(LIGHT_GRAY "[%s] [%s] " format NONE, TAG, __func__, ##__VA_ARGS__);} while(0)
+    #define LOGW(TAG, format, ...) do {printf(YELLOW "[%s] [%s] " format NONE, TAG, __func__, ##__VA_ARGS__);} while(0)
+    #define LOGE(TAG, format, ...) do {printf(LIGHT_RED "[%s] [%s] " format NONE, TAG, __func__, ##__VA_ARGS__);} while(0)
+    #define LOGD(TAG, format, ...) do {printf(LIGHT_CYAN "[%s] [%s] " format NONE, TAG, __func__, ##__VA_ARGS__);} while(0)
 #endif
 
 #endif // __LOG_H__

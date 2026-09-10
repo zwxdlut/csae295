@@ -1,3 +1,7 @@
 # general
-build/
 .vscode/
+obj/
+build/
+output/
+__pycache__/
+*.pyc

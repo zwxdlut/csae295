@@ -1,19 +1,17 @@
 cmake_minimum_required(VERSION 3.10)
-project(client)
+project(csae295_client)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_compile_options(-Wall -O0 -g -rdynamic)
-add_definitions(-D _UDEBUG)
+
+set(_UDEBUG 0 CACHE STRING "Enable debug macro (1 or 0)")
+if(_UDEBUG)
+    add_compile_definitions(_UDEBUG)
+endif()
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/protocol
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/protocol/data
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/protocol/jt808
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/protocol/jt1078
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/protocol/message
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/util
 )
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} SRCS)
