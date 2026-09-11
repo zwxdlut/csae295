@@ -47,7 +47,7 @@ private:
 
     static constexpr const char *TAG = "socketlib::Client";
 
-    char addr_port_[64]="";
+    char endpoint_[64]="";
     int32_t sockfd_;
     ConnectState state_ = CLOSED;
     // bool done_ = true;

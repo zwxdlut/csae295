@@ -33,13 +33,13 @@ void Client::set_connect_state_callback(connect_state_callback _callback, void *
 
 int32_t Client::open(const char *_addr, const uint32_t _port, const bool _block)
 {
-    sprintf(addr_port_, "%s:%d", _addr, _port);
+    sprintf(endpoint_, "%s:%d", _addr, _port);
 
     // create socket fd
     if (0 > (sockfd_ = socket(AF_INET, SOCK_STREAM, 0)))
     {
-        // printf("[socketlib::Client] [%s] [%s] create socket error(%d): %s!\n", __func__, addr_port_, errno, strerror(errno));
-        LOGE(TAG, "[%s] create socket error(%d): %s!\n", addr_port_, errno, strerror(errno));
+        // printf("[socketlib::Client] [%s] [%s] create socket error(%d): %s!\n", __func__, endpoint_, errno, strerror(errno));
+        LOGE(TAG, "[%s] create socket error(%d): %s!\n", endpoint_, errno, strerror(errno));
         return -1;
     }
 
@@ -51,8 +51,8 @@ int32_t Client::open(const char *_addr, const uint32_t _port, const bool _block)
 
     if (0 >= inet_pton(AF_INET, _addr, &addr.sin_addr))
     {
-        // printf("[socketlib::Client] [%s] inet_pton error for %s:%d!\n", __func__, _addr, _port);
-        LOGE(TAG, "inet_pton error for %s:%d!\n", _addr, _port);
+        // printf("[socketlib::Client] [%s] inet_pton error for %s!\n", __func__, endpoint_);
+        LOGE(TAG, "inet_pton error for %s!\n", endpoint_);
         return -1;
     }
 
@@ -71,8 +71,8 @@ int32_t Client::open(const char *_addr, const uint32_t _port, const bool _block)
     // connect
     if (0 != ::connect(sockfd_, (struct sockaddr*)&addr, sizeof(addr)))
     {
-        // printf("[socketlib::Client] [%s] [%s] connect error(%d): %s!\n", __func__, addr_port_, errno, strerror(errno));
-        LOGE(TAG, "[%s] connect error(%d): %s!\n", addr_port_, errno, strerror(errno));
+        // printf("[socketlib::Client] [%s] [%s] connect error(%d): %s!\n", __func__, endpoint_, errno, strerror(errno));
+        LOGE(TAG, "[%s] connect error(%d): %s!\n", endpoint_, errno, strerror(errno));
         return -1;
     }
 
@@ -100,8 +100,8 @@ int32_t Client::open(const char *_addr, const uint32_t _port, const bool _block)
 
     if (0 != timer_create(CLOCK_REALTIME, &evp, &timer_))  
     {  
-        // printf("[socketlib::Client] [%s] [%s] timer_create error(%d): %s!\n", __func__, addr_port_, errno, strerror(errno));
-        LOGE(TAG, "[%s] timer_create error(%d): %s!\n", addr_port_, errno, strerror(errno));
+        // printf("[socketlib::Client] [%s] [%s] timer_create error(%d): %s!\n", __func__, endpoint_, errno, strerror(errno));
+        LOGE(TAG, "[%s] timer_create error(%d): %s!\n", endpoint_, errno, strerror(errno));
         return -1;  
     }  
 
@@ -113,8 +113,8 @@ int32_t Client::open(const char *_addr, const uint32_t _port, const bool _block)
 
     if (0 != timer_settime(timer_, 0, &ts, NULL))  
     {  
-        // printf("[socketlib::Client] [%s] [%s] timer_create error(%d), %s!\n", __func__, addr_port_, errno, strerror(errno));
-        LOGE(TAG, "[%s] timer_settime error(%d): %s!\n", addr_port_, errno, strerror(errno));
+        // printf("[socketlib::Client] [%s] [%s] timer_create error(%d), %s!\n", __func__, endpoint_, errno, strerror(errno));
+        LOGE(TAG, "[%s] timer_settime error(%d): %s!\n", endpoint_, errno, strerror(errno));
         return -1;
     }
 
@@ -129,13 +129,13 @@ ssize_t Client::recv(void *_buf, size_t _size)
 
     if (0 == size)
     {
-        // printf("[socketlib::Client] [%s] [%s] remote shutdown, error(%d): %s!\n", __func__, addr_port_, errno, strerror(errno));
-        LOGE(TAG, "[%s] remote shutdown, error(%d): %s!\n", addr_port_, errno, strerror(errno));
+        // printf("[socketlib::Client] [%s] [%s] remote shutdown, error(%d): %s!\n", __func__, endpoint_, errno, strerror(errno));
+        LOGE(TAG, "[%s] remote shutdown, error(%d): %s!\n", endpoint_, errno, strerror(errno));
     }
     else if(0 > size) 
     {  
-        // printf("[socketlib::Client] [%s] [%s] receive error(%d): %s!\n", __func__, addr_port_, errno, strerror(errno));
-        LOGE(TAG, "[%s] receive error(%d): %s!\n", addr_port_, errno, strerror(errno));
+        // printf("[socketlib::Client] [%s] [%s] receive error(%d): %s!\n", __func__, endpoint_, errno, strerror(errno));
+        LOGE(TAG, "[%s] receive error(%d): %s!\n", endpoint_, errno, strerror(errno));
     }
 
     return size;
@@ -149,8 +149,8 @@ ssize_t Client::send(const void *_buf, size_t _size)
 
     if (0 > size)
     {
-        // printf("[socketlib::Client] [%s] [%s] send error(%d): %s!\n", __func__, addr_port_, errno, strerror(errno));
-        LOGE(TAG, "[%s] send error(%d): %s!\n", addr_port_, errno, strerror(errno));
+        // printf("[socketlib::Client] [%s] [%s] send error(%d): %s!\n", __func__, endpoint_, errno, strerror(errno));
+        LOGE(TAG, "[%s] send error(%d): %s!\n", endpoint_, errno, strerror(errno));
     }  
 
     return size;
@@ -165,8 +165,8 @@ int32_t Client::close()
     
     if (0 != timer_delete(timer_))
     {
-        // printf("[socketlib::Client] [%s] [%s] timer_delete error(%d): %s!\n", __func__, addr_port_, errno, strerror(errno));
-        LOGE(TAG, "[%s] timer_delete error(%d): %s!\n", addr_port_, errno, strerror(errno));
+        // printf("[socketlib::Client] [%s] [%s] timer_delete error(%d): %s!\n", __func__, endpoint_, errno, strerror(errno));
+        LOGE(TAG, "[%s] timer_delete error(%d): %s!\n", endpoint_, errno, strerror(errno));
     }
 
     // done_ = true;
@@ -174,14 +174,14 @@ int32_t Client::close()
 
     if (0 != shutdown(sockfd_, SHUT_RDWR))
     {
-        // printf("[socketlib::Client] [%s] [%s] shutdown error(%d): %s!\n", __func__, addr_port_, errno, strerror(errno));
-        LOGE(TAG, "[%s] shutdown error(%d): %s!\n", addr_port_, errno, strerror(errno));
+        // printf("[socketlib::Client] [%s] [%s] shutdown error(%d): %s!\n", __func__, endpoint_, errno, strerror(errno));
+        LOGE(TAG, "[%s] shutdown error(%d): %s!\n", endpoint_, errno, strerror(errno));
     }
 
     if (0 != ::close(sockfd_))
     {
-        // printf("[socketlib::Client] [%s] [%s] close error(%d): %s!\n", __func__, addr_port_, errno, strerror(errno));
-        LOGE(TAG, "[%s] close error(%d): %s!\n", addr_port_, errno, strerror(errno));
+        // printf("[socketlib::Client] [%s] [%s] close error(%d): %s!\n", __func__, endpoint_, errno, strerror(errno));
+        LOGE(TAG, "[%s] close error(%d): %s!\n", endpoint_, errno, strerror(errno));
 
     }
 
@@ -192,7 +192,7 @@ int32_t Client::close()
 
 void Client::listen()  
 {
-    LOGD(TAG, "[%s]\n", addr_port_);
+    LOGD(TAG, "[%s]\n", endpoint_);
     // while (!done_)
     // {
         struct tcp_info info; 
@@ -200,8 +200,8 @@ void Client::listen()
         ConnectState state;
 
         getsockopt(sockfd_, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&len);
-        // printf("[socketlib::Client] [%s] [%s] tcp state %d\n", __func__, addr_port_, info.tcpi_state);
-        // LOGD(TAG, "[%s] tcp state %d\n", addr_port_, info.tcpi_state);
+        // printf("[socketlib::Client] [%s] [%s] tcp state %d\n", __func__, endpoint_, info.tcpi_state);
+        // LOGD(TAG, "[%s] tcp state %d\n", endpoint_, info.tcpi_state);
 
         // check valid state
         if (TCP_CLOSING >= info.tcpi_state && 0 <= info.tcpi_state)
