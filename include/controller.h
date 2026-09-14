@@ -36,7 +36,6 @@ public:
         virtual void on_message(const Cloud2VehInhRes &_msg) {};
 
         virtual void on_message(const Veh2CloudState &_msg) {};
-
     };
 
     ~Controller();
@@ -79,17 +78,17 @@ public:
 private:
     // up channel
 
-    void up_sock_recv_thread();
+    void up_socket_recv_thread();
 
-    void up_sock_send_thread();
+    void up_socket_send_thread();
 
     void on_up_connect_state(const socketlib::ConnectState _state);
 
     // down channel
 
-    void down_sock_recv_thread();
+    void down_socket_recv_thread();
 
-    void down_sock_send_thread();
+    void down_socket_send_thread();
 
     void on_down_connect_state(const socketlib::ConnectState _state);
 
@@ -102,7 +101,7 @@ private:
     bool up_stopped_ = true;
     std::string up_addr_;
     uint32_t up_port_;
-    socketlib::Client up_sock_;
+    socketlib::Client up_socket_;
     std::thread  up_recv_thread_;
     std::thread  up_send_thread_;
     BlockQueue<std::shared_ptr<MessageBuffer>> up_send_queue_;
@@ -112,7 +111,7 @@ private:
     bool down_stopped_ = true;
     std::string down_addr_;
     uint32_t down_port_;
-    socketlib::Client down_sock_;
+    socketlib::Client down_socket_;
     std::thread down_recv_thread_;
     std::thread down_send_thread_;
     BlockQueue<std::shared_ptr<MessageBuffer>> down_send_queue_;

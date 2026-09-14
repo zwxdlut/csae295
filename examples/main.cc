@@ -8,15 +8,18 @@
 #define DOWN_SERVER_ADDRESS "60.16.59.129"
 #define DOWN_SERVER_PORT    50012
 
-Controller g_controller;
-Timer g_state_timer;
-Timer g_inh_timer;
-size_t g_inh_count = 0;
-
 class ControllerCallback: public Controller::Callback
 {
 public:
-    void on_up_connect_state(const socketlib::ConnectState _state)
+    ControllerCallback(Controller &_controller): controller_(_controller), inh_count_(0) {}
+
+    ~ControllerCallback() 
+    {
+        state_timer_.stop();
+        inh_timer_.stop();
+    }
+
+    void on_up_connect_state(const socketlib::ConnectState _state) override
     {
         LOGD(TAG, "state %d\n", _state);
 
@@ -25,48 +28,51 @@ public:
             LOGD(TAG, "The connection is established.\n");
 
             // VEH2CLOUD_INH
-            g_inh_timer.start(1000, [](void *_param)
-            {
-                if (3 <= g_inh_count)
+            inh_timer_.start(
+                1000, [](void *_param)
                 {
-                    LOGE(TAG, "Connection exception! VEH2CLOUD_INH count %zu\n", g_inh_count);
-                    g_inh_timer.stop();
-                    g_inh_count = 0;
-                    g_state_timer.stop();
-                    // g_controller.stop(UP_CHANNEL);
-                    // g_controller.start(UP_SERVER_ADDRESS, UP_SERVER_PORT, UP_CHANNEL);
-                    return;
-                }
+                    ControllerCallback *self = static_cast<ControllerCallback *>(_param);
 
-                Veh2CloudInh msg(
-                    0x01, get_utc_timestamp_ms(), CTRL_PRIORITY_7 | CTRL_ENCRYPTION_NONE, "Q1001", "sw_v1.0", 
-                    "hw_v1.0", "ad_v1.0", COMM_TYPE_4G, 15, TIME_SYNC_GNSS, GNSS_TYPE_GCJ02, "VEH2CLOUD_INH");
-                g_controller.send(msg, UP_CHANNEL);
-                g_inh_count++;
-            }, nullptr);
+                    if (3 <= self->inh_count_)
+                    {
+                        LOGE(TAG, "connection exception, VEH2CLOUD_INH count %zu!\n", self->inh_count_);
+                        self->inh_timer_.stop();
+                        self->inh_count_ = 0;
+                        self->state_timer_.stop();
+                        return;
+                    }
+
+                    Veh2CloudInh msg(
+                        0x01, get_utc_timestamp_ms(), CTRL_PRIORITY_7 | CTRL_ENCRYPTION_NONE, "Q1001", "sw_v1.0", 
+                        "hw_v1.0", "ad_v1.0", COMM_TYPE_4G, 15, TIME_SYNC_GNSS, GNSS_TYPE_GCJ02, "VEH2CLOUD_INH");
+                    self->controller_.send(msg, UP_CHANNEL);
+                    self->inh_count_++;
+                }, this);
 
             // VEH2CLOUD_STATE
-            g_state_timer.start(3000, [](void *_param)
-            {
-                auto timestamp = get_utc_timestamp_ms();
-                Veh2CloudState msg(
-                    0x01, timestamp, CTRL_PRIORITY_7 | CTRL_ENCRYPTION_NONE, "Q1001", std::vector<uint8_t>{1}, 
-                    timestamp, 4000, Position(90, 90, 700), 100000, 31, 200000, 4100, 500, 400, 300, 200, 500, 
-                    3000, 50000, 1, 500, 20000, 1000, 1, Position2D(80, 80), std::vector<Position2D>());
-                g_controller.send(msg, UP_CHANNEL);
-            }, nullptr);
+            state_timer_.start(
+                3000, [](void *_param)
+                {
+                    ControllerCallback *self = static_cast<ControllerCallback *>(_param);
+                    auto timestamp = get_utc_timestamp_ms();
+                    Veh2CloudState msg(
+                        0x01, timestamp, CTRL_PRIORITY_7 | CTRL_ENCRYPTION_NONE, "Q1001", std::vector<uint8_t>{1}, 
+                        timestamp, 4000, Position(90, 90, 700), 100000, 31, 200000, 4100, 500, 400, 300, 200, 500, 
+                        3000, 50000, 1, 500, 20000, 1000, 1, Position2D(80, 80), std::vector<Position2D>());
+                    self->controller_.send(msg, UP_CHANNEL);
+                }, this);
         }
         else
         {
-            LOGW(TAG, "The connection is lost.\n");
+            LOGE(TAG, "The connection is lost!\n");
 
-            g_inh_timer.stop();
-            g_inh_count = 0;
-            g_state_timer.stop();
+            state_timer_.stop();
+            inh_timer_.stop();
+            inh_count_ = 0;
         }
     }
 
-    void on_down_connect_state(const socketlib::ConnectState _state)
+    void on_down_connect_state(const socketlib::ConnectState _state) override
     {
         LOGD(TAG, "state %d\n", _state);
 
@@ -76,34 +82,38 @@ public:
         }
         else
         {
-            LOGW(TAG, "The connection is lost.\n");
+            LOGE(TAG, "The connection is lost.\n");
         }
     }
 
     void on_message(const Cloud2VehInhRes &_msg) override
     {
         LOGD(TAG, "Cloud2VehInhRes\n");
-        g_inh_timer.stop();
+        inh_timer_.stop();
+        inh_count_ = 0;
     }
 
 private:
     static constexpr const char *TAG = "ControllerCallback";
+
+    Controller &controller_;
+    Timer state_timer_;
+    Timer inh_timer_;
+    size_t inh_count_ = 0;
 };
 
 int main(int argc, char *argv[])
 {
-    ControllerCallback callback;
+    Controller controller;
+    ControllerCallback callback(controller);
 
-    g_controller.set_callback(&callback);
-    g_controller.start(UP_SERVER_ADDRESS, UP_SERVER_PORT, DOWN_SERVER_ADDRESS, DOWN_SERVER_PORT);
+    controller.set_callback(&callback);
+    controller.start(UP_SERVER_ADDRESS, UP_SERVER_PORT, DOWN_SERVER_ADDRESS, DOWN_SERVER_PORT);
 
     while (1) {}
     
     // never reach
-    g_state_timer.stop();
-    g_inh_timer.stop();
-    g_inh_count = 0;
-    g_controller.stop();
+    controller.stop();
 
     return 0;
 }

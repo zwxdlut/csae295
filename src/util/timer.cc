@@ -26,15 +26,16 @@ int32_t Timer::start(const uint32_t _period, handler _handler, void *_param, con
     memset(&evp, 0, sizeof(struct sigevent));   
     evp.sigev_value.sival_ptr = this;
     evp.sigev_notify = SIGEV_THREAD; 
-    evp.sigev_notify_function = [](union sigval _s)
-    {
-        Timer *p = (Timer*)_s.sival_ptr;
-
-        if (nullptr != p->handler_)
+    evp.sigev_notify_function = 
+        [](union sigval _s)
         {
-            p->handler_(p->param_);
-        } 
-    };
+            Timer *p = (Timer*)_s.sival_ptr;
+
+            if (nullptr != p->handler_)
+            {
+                p->handler_(p->param_);
+            } 
+        };
 
     if (0 != timer_create(CLOCK_REALTIME, &evp, &timer_))  
     {  

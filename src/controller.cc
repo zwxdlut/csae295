@@ -27,57 +27,65 @@ void Controller::start(const std::string &_addr, const uint32_t _port, const uin
     {
         up_addr_ = _addr;
         up_port_ = _port;
-        up_stopped_ = false;
 
         // set socket callback
-        up_sock_.set_connect_state_callback([](const socketlib::ConnectState _state, void *_param)
-        {
-            Controller *self = static_cast<Controller *>(_param);
-            self->on_up_connect_state(_state);
-        }, this);
+        up_socket_.set_connect_state_callback(
+            [](const socketlib::ConnectState _state, void *_param)
+            {
+                Controller *self = static_cast<Controller *>(_param);
+                self->on_up_connect_state(_state);
+            }, this);
 
         // create socket and connect it to server
-        up_sock_.open(up_addr_.c_str(), up_port_);
+        up_socket_.open(up_addr_.c_str(), up_port_);
         
+        up_stopped_ = false;
+
         // receive thread
-        up_recv_thread_ = std::thread([this]()
-        {
-            this->up_sock_recv_thread();
-        });
+        up_recv_thread_ = std::thread(
+            [this]()
+            {
+                this->up_socket_recv_thread();
+            });
 
         // send thread
-        up_send_thread_ = std::thread([this]()
-        {
-            this->up_sock_send_thread();
-        });
+        up_send_thread_ = std::thread(
+            [this]()
+            {
+                this->up_socket_send_thread();
+            });
     }
     else if (DOWN_CHANNEL == _ch)
     {
         down_addr_ = _addr;
         down_port_ = _port;
-        down_stopped_ = false;
 
         // set socket callback
-        down_sock_.set_connect_state_callback([](const socketlib::ConnectState _state, void *_param)
-        {
-            Controller *self = static_cast<Controller *>(_param);
-            self->on_down_connect_state(_state);
-        }, this);
+        down_socket_.set_connect_state_callback(
+            [](const socketlib::ConnectState _state, void *_param)
+            {
+                Controller *self = static_cast<Controller *>(_param);
+                self->on_down_connect_state(_state);
+            }, this);
     
         // create socket and connect it to server
-        down_sock_.open(down_addr_.c_str(), down_port_);
+        down_socket_.open(down_addr_.c_str(), down_port_);
         
+        down_stopped_ = false;
+
         // receive thread
-        down_recv_thread_ = std::thread([this]()
-        {
-            this->down_sock_recv_thread();
-        });
+        down_recv_thread_ = std::thread(
+            [this]()
+            {
+                this->down_socket_recv_thread();
+            });
 
         // send thread
-        down_send_thread_ = std::thread([this]()
-        {
-            this->down_sock_send_thread();
-        });
+        down_send_thread_ = std::thread(
+            [this]()
+            {
+                this->down_socket_send_thread();
+            });
     }
 }
 
@@ -97,10 +105,10 @@ void Controller::stop(const uint8_t _ch)
         }
 
         up_stopped_ = true;
-        up_sock_.close();
         up_recv_thread_.join();
         up_send_queue_.notify();
         up_send_thread_.join();
+        up_socket_.close();
     }
     else if (DOWN_CHANNEL == _ch)
     {
@@ -111,10 +119,10 @@ void Controller::stop(const uint8_t _ch)
 
         heartbeat_timer_.stop();
         down_stopped_ = true;
-        down_sock_.close();
         down_recv_thread_.join();
         down_send_queue_.notify();
         down_send_thread_.join();
+        down_socket_.close();
     }
 }
 
@@ -196,14 +204,14 @@ void Controller::on_message(const Veh2CloudState &_msg)
 
 // up channel
 
-void Controller::up_sock_recv_thread()
+void Controller::up_socket_recv_thread()
 {
     uint8_t buf[4096] = {0};
     ssize_t size = 0;
 
     while (!up_stopped_)
     {
-        size = up_sock_.recv(buf, sizeof(buf));
+        size = up_socket_.recv(buf, sizeof(buf));
 
         if (0 == size)
         {
@@ -230,7 +238,7 @@ void Controller::up_sock_recv_thread()
     }
 }
 
-void Controller::up_sock_send_thread()
+void Controller::up_socket_send_thread()
 {
     while (!up_stopped_)
     {	
@@ -243,7 +251,7 @@ void Controller::up_sock_send_thread()
         
         printf("\n");
         print_buffer("SOCK-TX(UP)", 0, p->data, p->size);
-        up_sock_.send(p->data, p->size);
+        up_socket_.send(p->data, p->size);
         up_send_queue_.pull();
     }
 }
@@ -258,14 +266,15 @@ void Controller::on_up_connect_state(const socketlib::ConnectState _state)
     }
     else
     {
-        LOGW(TAG, "The connection is lost, and a reconnection is scheduled in 5 seconds.\n");
+        LOGE(TAG, "The connection is lost, and retry in 5 seconds!\n");
         stop(UP_CHANNEL);
 
-        std::thread t([&]()
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-            start(up_addr_, up_port_, UP_CHANNEL);
-        });
+        std::thread t(
+            [&]()
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+                start(up_addr_, up_port_, UP_CHANNEL);
+            });
         t.detach();
     }
 
@@ -277,14 +286,14 @@ void Controller::on_up_connect_state(const socketlib::ConnectState _state)
 
 // down channel
 
-void Controller::down_sock_recv_thread()
+void Controller::down_socket_recv_thread()
 {
     uint8_t buf[4096] = {0};
     ssize_t size = 0;
 
     while (!down_stopped_)
     {
-        size = down_sock_.recv(buf, sizeof(buf));
+        size = down_socket_.recv(buf, sizeof(buf));
 
         if (0 == size)
         {
@@ -311,7 +320,7 @@ void Controller::down_sock_recv_thread()
     }
 }
 
-void Controller::down_sock_send_thread()
+void Controller::down_socket_send_thread()
 {
     while (!down_stopped_)
     {	
@@ -324,7 +333,7 @@ void Controller::down_sock_send_thread()
         
         printf("\n");
         print_buffer("SOCK-TX(DOWN)",0, p->data, p->size);
-        down_sock_.send(p->data, p->size);
+        down_socket_.send(p->data, p->size);
         down_send_queue_.pull();
     }
 }
@@ -337,23 +346,25 @@ void Controller::on_down_connect_state(const socketlib::ConnectState _state)
     {
         LOGD(TAG, "The connection is established.\n");
 
-        heartbeat_timer_.start(10000, [](void *_param)
-        {
-            Controller *self = static_cast<Controller *>(_param);
-            MessageHeader msg(0, HEARTBEAT, VERSION_01, get_utc_timestamp_ms(), CTRL_PRIORITY_7 | CTRL_ENCRYPTION_NONE);
-            self->send(msg, DOWN_CHANNEL);
-        }, this, true);
+        heartbeat_timer_.start(
+            10000, [](void *_param)
+            {
+                Controller *self = static_cast<Controller *>(_param);
+                MessageHeader msg(0, HEARTBEAT, VERSION_01, get_utc_timestamp_ms(), CTRL_PRIORITY_7 | CTRL_ENCRYPTION_NONE);
+                self->send(msg, DOWN_CHANNEL);
+            }, this, true);
     }
     else
     {
-        LOGW(TAG, "The connection is lost, and a reconnection is scheduled in 5 seconds.\n");
+        LOGE(TAG, "The connection is lost, and retry in 5 seconds!\n");
         stop(DOWN_CHANNEL);
 
-        std::thread t([&]()
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-            start(down_addr_, down_port_, DOWN_CHANNEL);
-        });
+        std::thread t(
+            [&]()
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+                start(down_addr_, down_port_, DOWN_CHANNEL);
+            });
         t.detach();
     }
 
